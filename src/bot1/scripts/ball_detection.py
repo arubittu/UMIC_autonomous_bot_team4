@@ -15,7 +15,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import time
 bridge=CvBridge()
 pub = rospy.Publisher('ball_msg', MultiArrayDimension, queue_size=1)
-ball_color_boundaries = [ ([0, 0, 220], [30, 30, 255]), ([0, 220, 0], [30, 255, 30])]
+color_boundaries = [ ([0, 0, 220], [30, 30, 255]), ([0, 220, 0], [30, 255, 30])]
 msg=MultiArrayDimension()
 
 def image_callback(img_msg):
@@ -34,7 +34,7 @@ def image_callback(img_msg):
 
 def classifier(img):
     masks = []
-    for (low, up) in ball_color_boundaries:
+    for (low, up) in color_boundaries:
         low=np.array(low, dtype='uint8')
         up=np.array(up, dtype='uint8')
         mask=cv2.inRange(img, low, up)
@@ -72,9 +72,9 @@ def classifier(img):
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
             cv2.circle(img, (cx, cy), 2, (255, 0, 0), 2)
-            msg_ball.label='green'
-            msg_ball.size=cx
-            msg_ball.stride=cy
+            msg.label='green'
+            msg.size=cx
+            msg.stride=cy
             pub.publish(msg)
             print("green", cx, cy)
             #return ("green", cx, cy)
@@ -83,9 +83,9 @@ def classifier(img):
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
             cv2.circle(img, (cx, cy), 2, (255, 0, 0), 2)
-            msg_ball.label='red'
-            msg_ball.size=cx
-            msg_ball.stride=cy
+            msg.label='red'
+            msg.size=cx
+            msg.stride=cy
             pub.publish(msg)
             print("red", cx, cy)
             #return ("red", cx, cy)
@@ -94,9 +94,9 @@ def classifier(img):
     else:
         cv2.imshow('',img)
         cv2.waitKey(10)
-        msg_ball.label='None'
-        msg_ball.size=200
-        msg_ball.stride=400
+        msg.label='None'
+        msg.size=200
+        msg.stride=400
         pub.publish(msg)
         print("None")
          

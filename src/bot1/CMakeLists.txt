@@ -7,12 +7,7 @@ project(bot1)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  std_msgs
-  cv_bridge
-)
+find_package(catkin REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -104,10 +99,10 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- # INCLUDE_DIRS include
-  LIBRARIES mybot_description
-  CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge
-  DEPENDS system_lib
+#  INCLUDE_DIRS include
+#  LIBRARIES bot1
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
 )
 
 ###########
@@ -118,7 +113,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
- ${catkin_INCLUDE_DIRS}
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -160,10 +155,10 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
- catkin_install_python(PROGRAMS
-   scripts/image.py scripts/arrow.py scripts/laser_distance.py scripts/ball_detection.py scripts/ball_control.py
-   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
- )
+# catkin_install_python(PROGRAMS
+#   scripts/my_python_script
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html

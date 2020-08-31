@@ -1,40 +1,13 @@
 <launch>
-  <!--arg name="model" default="$(find bot1)/urdf/bot1.urdf"/-->
-  <arg name="rvizconfig" default="$(find bot1)/urdf/bot1.urdf" />
 
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" />
+  <param name="robot_description" command="$(find xacro)/xacro.py '$(find bot1)/urdf/bot1_updated.urdf'"/>
 
-  <rosparam command="load"
-            file="$(find bot1)/config/joints.yaml"
-            ns="bot1_joint_state_controller" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="use_gui" value="True"/>
+  </node>
 
-  <rosparam command="load"
-            file="$(find bot1)/config/differential.yaml"
-            ns="bot1_diffdrive_controller" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
 
-  <rosparam command="load"
-            file="$(find bot1)/config/front_gate.yaml"
-            ns="bot1_frontgate_controller" />
-
-  <rosparam command="load"
-            file="$(find bot1)/config/back_gate.yaml"
-            ns="bot1_backgate_controller" />
-
-  <rosparam command="load"
-            file="$(find bot1)/config/left_flap.yaml"
-            ns="bot1_lf_controller" />
-
-  <rosparam command="load"
-            file="$(find bot1)/config/right_flap.yaml"
-            ns="bot1_rf_controller" />
-
-  <!--node name="umic_controller_spawner" pkg="controller_manager" type="spawner"
-    args="bot1_joint_state_controller
-          bot1_frontgate_controller
-          bot1_backgate_controller
-          bot1_diffdrive_controller
-          bot1_lf_controller
-          bot1_rf_controller
-          shutdown-timeout 3"/-->
+  <node name="rviz" pkg="rviz" type="rviz"/>
 
 </launch>

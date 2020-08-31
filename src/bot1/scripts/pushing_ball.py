@@ -95,7 +95,7 @@ fg_close()
 flaps_open(1)
 
 while not rospy.is_shutdown():
-	color = "Red"
+	color = "Green"
 	if color == "Red":
 		print(distance)
 		flaps_close(1)
@@ -127,7 +127,7 @@ while not rospy.is_shutdown():
 		speed.angular.z = 0
 		
 		fg_open()
-		flaps_close(30)
+		flaps_close(50)
 		fg_close()
 		flaps_close(1)
 		

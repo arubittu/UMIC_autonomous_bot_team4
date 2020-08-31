@@ -33,7 +33,6 @@ pub_bg = rospy.Publisher('/bot1_backgate_controller/command', Float64, queue_siz
 
 pi = math.pi
 
-
 def fg_close(t):
 	t0 = rospy.Time.now().to_sec()
 	t1 = t0
@@ -112,19 +111,6 @@ def bg_open():
 		t1 = rospy.Time.now().to_sec()
 		rate.sleep()
 
-def rotate(value, t):
-	angle = Twist()
-	angle.linear.x = 0
-	angle.angular.z = value
-
-	rate = rospy.Rate(20)
-
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	while (t1 - t0) < t:
-		pub.publish(angle)
-		t1 = rospy.Time.now().to_sec()
-		rate.sleep()
 
 def traverse(v,t):
 	speed = Twist()
@@ -133,7 +119,7 @@ def traverse(v,t):
 	t1 = t0
 	rate_df = rospy.Rate(50)
 	while (t1 - t0) < t:
-		pub.publish(speed)
+		pub_df.publish(speed)
 		t1 = rospy.Time.now().to_sec()
 		rate_df.sleep()
 
@@ -407,6 +393,7 @@ def image_callback(img_msg):
 def listener():
     
     rospy.init_node('line_follower', anonymous=False)
+    
     rotate(0,1)
     init_flaps_open()
     

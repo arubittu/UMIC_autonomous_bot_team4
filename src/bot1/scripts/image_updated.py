@@ -15,85 +15,26 @@ from sensor_msgs.msg import Image, LaserScan
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Twist
-import math
 import time
+import math
  
+ball_color_boundaries = [ ([0, 0, 220], [30, 30, 255]), ([0, 220, 0], [30, 255, 30])]
 
 bridge = CvBridge()
 pub = rospy.Publisher('/bot1_diffdrive_controller/cmd_vel', Twist, queue_size=10)
-
+msg_ball=MultiArrayDimension()
 msg=Twist()
-
-## Flaps and Basic Functions ##
-pub_fg = rospy.Publisher('/bot1_frontgate_controller/command', Float64, queue_size=10)
-pub_lf = rospy.Publisher('/bot1_lf_controller/command', Float64, queue_size=10)
-pub_rf = rospy.Publisher('/bot1_rf_controller/command', Float64, queue_size=10)
-pub_bg = rospy.Publisher('/bot1_backgate_controller/command', Float64, queue_size=10)
-#pub_df = rospy.Publisher('/bot1_diffdrive_controller/cmd_vel', Twist, queue_size=10)
-
 pi = math.pi
 
 
-def fg_close(t):
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	rate2 = rospy.Rate(20)
-	while (t1 - t0) < t:
-		pub_fg.publish(20)
-		t1 = rospy.Time.now().to_sec()
-		rate2.sleep()
-
-def fg_open():
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	rate = rospy.Rate(20)
-	while (t1 - t0) < 4:
-		pub_fg.publish(-5)
-		t1 = rospy.Time.now().to_sec()
-		rate.sleep()
-
-def init_flaps_open():
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	rate = rospy.Rate(10)
-	while (t1 - t0) < 2:
-		pub_lf.publish(1)
-		pub_rf.publish(-1)
-		t1 = rospy.Time.now().to_sec()
-		rate.sleep()
-
-
-def flaps_open(x):
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	rate = rospy.Rate(20)
-	while (t1 - t0) < 3:
-		pub_lf.publish(x)
-		pub_rf.publish(-x)
-		t1 = rospy.Time.now().to_sec()
-		rate.sleep()
-
-def flaps_close(x):
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	rate3 = rospy.Rate(20)
-	while (t1 - t0) < 2:
-		pub_lf.publish(-x)
-		pub_rf.publish(x)
-		t1 = rospy.Time.now().to_sec()
-		rate3.sleep()
-
-def rotate(value, t):
-	angle = Twist()
-	angle.linear.x = 0
-	angle.angular.z = value
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	rate = rospy.Rate(10)
-	while (t1 - t0) < t:
-		pub.publish(angle)
-		t1 = rospy.Time.now().to_sec()
-		rate.sleep()
+## Flaps and Basic Functions ##
+pub_bg = rospy.Publisher('/bot1_backgate_controller/command', Float64, queue_size=10)
+pub_fg = rospy.Publisher('/bot1_frontgate_controller/command', Float64, queue_size=10)
+pub_lf = rospy.Publisher('/bot1_lf_controller/command', Float64, queue_size=10)
+pub_rf = rospy.Publisher('/bot1_rf_controller/command', Float64, queue_size=10)
+#pub_df = rospy.Publisher('/bot1_diffdrive_controller/cmd_vel', Twist, queue_size=10)
+ 
+###################################### dump-script definations
 
 def bg_close():
 	t0 = rospy.Time.now().to_sec()
@@ -112,20 +53,6 @@ def bg_open():
 		t1 = rospy.Time.now().to_sec()
 		rate.sleep()
 
-def rotate(value, t):
-	angle = Twist()
-	angle.linear.x = 0
-	angle.angular.z = value
-
-	rate = rospy.Rate(20)
-
-	t0 = rospy.Time.now().to_sec()
-	t1 = t0
-	while (t1 - t0) < t:
-		pub.publish(angle)
-		t1 = rospy.Time.now().to_sec()
-		rate.sleep()
-
 def traverse(v,t):
 	speed = Twist()
 	speed.linear.x = v
@@ -138,43 +65,13 @@ def traverse(v,t):
 		rate_df.sleep()
 
 	speed.linear.x = 0
-	pub_df.publish(speed)
+	pub.publish(speed)
 
+#bg_close()
 
-### ball_control DEFINITION ###
-
-def ball_control(color):
-	 
-	
-	if color == "red":
-		fg_close(2)
-		flaps_close(1)
-		
-		rotate(0.3, 2)
-		time.sleep(0.5)
-		flaps_open(30)
-		
-		rotate(-0.3, 2.5)
-
-		
-	elif color == "green":
-		go_forward=Twist()
-		fg_close(2)
-
-		go_forward.linear.x=0.192
-		pub.publish(go_forward)
-		fg_open()
-		flaps_close(40)
-		time.sleep(2)
-		fg_close()
-		flaps_open(1)
-
-
-### DUMPING THE BALLS ###
-
+#rate = rospy.Rate(30)
+ 
 def dump():
-
-	rate = rospy.Rate(30)	
 	
 	traverse(-0.3, 6)
 	rotate(pi/4, 11)
@@ -183,6 +80,175 @@ def dump():
 	traverse(-0.8, 2)
 	time.sleep(5)
 
+
+#dump()
+
+
+####################### ball detection script definations
+
+
+def classifier(img):
+    masks = []
+    for (low, up) in ball_color_boundaries:
+        low=np.array(low, dtype='uint8')
+        up=np.array(up, dtype='uint8')
+        mask=cv2.inRange(img, low, up)
+        op=cv2.bitwise_and(img, img, mask=mask)
+        masks.append(op)
+
+    red_zone = cv2.cvtColor(masks[0], cv2.COLOR_BGR2GRAY)
+    green_zone = cv2.cvtColor(masks[1], cv2.COLOR_BGR2GRAY)
+
+    _, red_zone = cv2.threshold(red_zone, 20, 255, cv2.THRESH_BINARY)
+    _, green_zone = cv2.threshold(green_zone, 20, 255, cv2.THRESH_BINARY)
+
+    _,contours_red, hierarchy = cv2.findContours(red_zone, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    _,contours_green, hierarchy = cv2.findContours(green_zone, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    MAX = 0.0
+    color = ""
+    idx = -1
+
+    for i in range(len(contours_red)):
+        if(cv2.contourArea(contours_red[i])>MAX):
+            MAX = cv2.contourArea(contours_red[i])
+            color = "red"
+            idx = i
+
+    for i in range(len(contours_green)):
+        if(cv2.contourArea(contours_green[i])>MAX):
+            MAX = cv2.contourArea(contours_green[i])
+            color = "green"
+            idx = i
+
+    if(idx != -1 and MAX>70):
+        if(color == "green"):
+            M = cv2.moments(contours_green[idx])
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+            cv2.circle(img, (cx, cy), 2, (255, 0, 0), 2)
+            msg_ball.label='green'
+            msg_ball.size=cx
+            msg_ball.stride=cy
+            #pub.publish(msg)
+            #print("green", cx, cy)
+            return msg_ball
+        else:
+            M = cv2.moments(contours_red[idx])
+            cx = int(M['m10']/M['m00'])
+            cy = int(M['m01']/M['m00'])
+            cv2.circle(img, (cx, cy), 2, (255, 0, 0), 2)
+            msg_ball.label='red'
+            msg_ball.size=cx
+            msg_ball.stride=cy
+            #pub.publish(msg)
+            #print("red", cx, cy)
+            return msg_ball
+        #cv2.imshow('',img)
+        #cv2.waitKey(10)
+    else:
+        #cv2.imshow('',img)
+        #cv2.waitKey(10)
+        msg_ball.label='None'
+        msg_ball.size=200
+        msg_ball.stride=400
+        #pub.publish(msg)
+        #print("None")
+        return msg_ball
+
+########################### ball pickup, push script definations
+
+def fg_close_init():
+	t0 = rospy.Time.now().to_sec()
+	t1 = t0
+	rate2 = rospy.Rate(25)
+	while (t1 - t0) < 2:
+		pub_fg.publish(5)
+		t1 = rospy.Time.now().to_sec()
+		rate2.sleep()
+def fg_close():
+	t0 = rospy.Time.now().to_sec()
+	t1 = t0
+	rate2 = rospy.Rate(25)
+	while (t1 - t0) < 4:
+		pub_fg.publish(5)
+		t1 = rospy.Time.now().to_sec()
+		rate2.sleep()
+
+def fg_open():
+	t0 = rospy.Time.now().to_sec()
+	t1 = t0
+	rate = rospy.Rate(10)
+	while (t1 - t0) < 2.5:
+		pub_fg.publish(-5)
+		t1 = rospy.Time.now().to_sec()
+		rate.sleep()
+
+def flaps_open(x):
+	t0 = rospy.Time.now().to_sec()
+	t1 = t0
+	rate = rospy.Rate(10)
+	while (t1 - t0) < 2:
+		pub_lf.publish(x)
+		pub_rf.publish(-x)
+		t1 = rospy.Time.now().to_sec()
+		rate.sleep()
+
+def flaps_close(x):
+	t0 = rospy.Time.now().to_sec()
+	t1 = t0
+	rate3 = rospy.Rate(200)
+	while (t1 - t0) < 2:
+		pub_lf.publish(-x)
+		pub_rf.publish(x)
+		t1 = rospy.Time.now().to_sec()
+		rate3.sleep()
+
+def rotate(value, t):
+	angle = Twist()
+	angle.linear.x = 0
+	angle.angular.z = value
+	t0 = rospy.Time.now().to_sec()
+	t1 = t0
+	rate = rospy.Rate(10)
+	while (t1 - t0) < t:
+		pub.publish(angle)
+		t1 = rospy.Time.now().to_sec()
+		rate.sleep()
+
+
+### ball_control DEFINITION ###
+
+def ball_control(color):
+	 
+	
+	if color == "red":
+		fg_close_init()
+		flaps_close(1)
+		rotate(0.3, 2)
+			
+		flaps_open(30)
+		time.sleep(0.5)
+		flaps_close(1)
+			
+		rotate(-0.3, 2.5)
+         
+		
+	elif color == "green":
+		go_forward=Twist()
+		fg_close_init()
+		flaps_open(1)
+		time.sleep(1)
+		go_forward.linear.x=0.192
+		pub.publish(go_forward)
+		fg_open()
+		flaps_close(30)
+		time.sleep(1.5)
+		rotate(-0.1, 2)
+		fg_close()
+		flaps_close(1)
+
+####################################
 def calculate_lines(frame, lines):
     # Empty arrays to store the coordinates of the left and right lines
     left = []
@@ -235,7 +301,7 @@ def visualize_lines(frame, lines):
         #cv2.line(lines_visualize, (int(m[0]), int(m[1])), (int(m[2]), int(m[3])), (0, 255, 255), 5)
 
     return lines_visualize
-
+################################################################################################
 def show_image(img):
     #cv2.imwrite('/home/aryan/mybot_ws/src/mybot_description/scripts/lol.jpg',img)
     #img=cv2.imread('/home/aryan/mybot_ws/src/mybot_description/scripts/lol.jpg')
@@ -247,9 +313,10 @@ def controls(lx,ly):
 	msg.angular.z=-(error/1000) 
 	msg.linear.x=0.1-abs(error/2000)
 	pub.publish(msg)
-
+	#time.sleep(0.1)
  
 ##########################################
+
 direction='none'
 ball_color='None'
 bx=200
@@ -284,22 +351,23 @@ def arrow_callback(str_msg):
 	#rospy.loginfo(direction)
 #########################		
 def ball_follow_control(bx):
-	error=bx-200
+	error=(bx-200)
 	msg.angular.z=-(error/100) 
 	msg.linear.x=0.1-abs(error/2000)
 	pub.publish(msg)
-	print('lol')
-
+	#time.sleep(0.1)
+	print(bx)
 
 ############################
 def image_callback(img_msg):
-	
+	#dump()
     #print(direction) 
     laser_placeholder()
     rospy.loginfo(img_msg.header)
     print('the laser distance is: {}'.format(laser_distance))
     # Try to convert the ROS Image message to a CV2 Image
     try:
+    	#dump()
         cv_image = bridge.imgmsg_to_cv2(img_msg, "passthrough")
         #show_image(cv_image)
         cv2.imwrite('/home/gangadhar/project_umic/src/bot1/scripts/lol.jpg',cv_image)
@@ -350,29 +418,28 @@ def image_callback(img_msg):
            # cv2.imshow('',segment)
         
 
-        centroid_placeholder()
-        
-        print('ball color is: {} , bx = {} , by = {}'.format(ball_color,bx,by))
+        #centroid_placeholder()
+        ball_msg=classifier(img)
+
+        print('ball color is: {} , bx = {} , by = {}'.format(ball_msg.label,ball_msg.size,ball_msg.stride))
 
         arrow_placeholder()
 
-        #arrow_work(cx,cy,centroid)
-         
-        if laser_distance <0.24:
+   
+  ######################### main if else code:
+
+        if laser_distance <0.23:
         	msg.linear.x=0
         	msg.angular.z=0
         	pub.publish(msg)
         	time.sleep(0.1)
-        	if ball_color=='red':
+        	if ball_msg.label=='red':
         		ball_control('red')
-        	elif ball_color=='green':
+        	elif ball_msg.label=='green':
         		ball_control('green')
-
-        #if ball_color!='None':
-        #	controls(bx,by)
-        #elif ball_color!='None':
-        #	ball_follow_control(bx)
-        elif cx==200 and cy==400: #and direction=='right':
+				
+				
+        elif cx==200 and cy==400:  
 
             msg.linear.x=0
             msg.angular.z=0
@@ -391,12 +458,12 @@ def image_callback(img_msg):
              #time.sleep(0.2)
             pub.publish(msg)
             time.sleep(0.1)
- 
+
         else:
             controls(cx,cy)
         #if ry>76 and cx==200 and cy==400:
         	#turn_controls(rx,ry)
-
+###########################################################
         show_image(centroid)
 
         #cv2.imshow('',centroid)
@@ -407,18 +474,17 @@ def image_callback(img_msg):
 def listener():
     
     rospy.init_node('line_follower', anonymous=False)
-    rotate(0,1)
-    init_flaps_open()
-    
+ 
     rospy.Subscriber("/mybot/camera1/image_raw", Image, image_callback)
     #rospy.Subscriber("/arrow_msg", String, arrow_callback)
-    #spin() simply keeps python from exiting until this node is stopped
+     #spin() simply keeps python from exiting until this node is stopped
+    #dump()
     rospy.spin()
- 
+
  
  
 if __name__ == '__main__':
-	listener()
+    listener()
     #rospy.Subscriber("/arrow_msg", String, arrow_callback)
     #rospy.spin()
  
