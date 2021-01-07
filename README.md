@@ -1,4 +1,8 @@
-# UMIC_autonomous_bot_team4
+# Autonomous Ball Picking and Lane Following Robot
+
+This robot basically follows the middle lane of a road, and autonomously picks up green balls and avoids red balls throughout the map. It also Identifies road signs (left/right)
+and turns in the appropriate direction.
+
 # src folder :
 contains the integration of line-follower,arrow_detection,laser,and ball pick-up and pushing code.
 to use this, follow the steps below:
