@@ -22,3 +22,4 @@ to use this, follow the steps below:
 9) image.py contains the main code for line following and ball pickup/push , wherease arrow.py finds the direction of arrow and sends it to image .py through a topic, so that the bot turns in the specified direction when intersection occurs. ball_detection sends the color and centroid value of the nearest ball to image.py through a topic. so that image.py can make decision to pickup/push ball if red/green and ball following with help of centroid. 
 10) note - if laser value <23cm bot will stop.
 
+![alt text](https://github.com/arubittu/UMIC_autonomous_bot_team4/blob/master/BOT%20PICS/1.png?raw=true)
