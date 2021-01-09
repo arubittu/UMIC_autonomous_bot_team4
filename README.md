@@ -5,7 +5,7 @@ and turns in the appropriate direction.
 
 link to the video - https://youtu.be/ncgQHx79Lvc
 
-# src folder :
+# Follow these steps to run :
 contains the integration of line-follower,arrow_detection,laser,and ball pick-up and pushing code.
 to use this, follow the steps below:
 
